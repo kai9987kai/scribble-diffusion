@@ -18,6 +18,30 @@ const STROKE_COLORS = [
   { name: "Cool", value: "#2563eb" },
 ];
 
+function getStoredPaths() {
+  try {
+    return window.localStorage?.getItem("paths");
+  } catch (e) {
+    return null;
+  }
+}
+
+function setStoredPaths(paths) {
+  try {
+    window.localStorage?.setItem("paths", JSON.stringify(paths, null, 2));
+  } catch (e) {
+    return;
+  }
+}
+
+function clearStoredPaths() {
+  try {
+    window.localStorage?.removeItem("paths");
+  } catch (e) {
+    return;
+  }
+}
+
 export default function Canvas({
   startingPaths,
   onScribble,
@@ -29,13 +53,7 @@ export default function Canvas({
   const [strokeColor, setStrokeColor] = React.useState("black");
   const [tool, setTool] = React.useState("pen");
   const [savedPathsAvailable, setSavedPathsAvailable] = React.useState(false);
-
-  const loadStartingPaths = React.useCallback(async () => {
-    await canvasRef.current.loadPaths(startingPaths);
-    setScribbleExists(true);
-    const data = await canvasRef.current.exportImage("png");
-    onScribble(data);
-  }, [onScribble, setScribbleExists, startingPaths]);
+  const [initialLoadStatus, setInitialLoadStatus] = React.useState("idle");
 
   useEffect(() => {
     // Hack to work around Firfox bug in react-sketch-canvas
@@ -44,16 +62,33 @@ export default function Canvas({
       .querySelector("#react-sketch-canvas__stroke-group-0")
       ?.removeAttribute("mask");
 
-    setSavedPathsAvailable(Boolean(localStorage.getItem("paths")));
-    loadStartingPaths();
-  }, [loadStartingPaths]);
+    setSavedPathsAvailable(Boolean(getStoredPaths()));
+    const timeoutId = setTimeout(loadStartingPaths, 100);
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     canvasRef.current?.eraseMode(tool === "eraser");
   }, [tool]);
 
+  async function loadStartingPaths() {
+    if (!startingPaths?.length) return;
+
+    try {
+      setInitialLoadStatus("loading");
+      await canvasRef.current.loadPaths(startingPaths);
+      setScribbleExists(true);
+      const data = await canvasRef.current.exportImage("png");
+      onScribble(data);
+      setInitialLoadStatus("loaded");
+    } catch (e) {
+      setInitialLoadStatus(e.message || "failed");
+    }
+  }
+
   async function restoreSavedPaths() {
-    const savedPaths = localStorage.getItem("paths");
+    const savedPaths = getStoredPaths();
     if (!savedPaths) return;
 
     try {
@@ -69,7 +104,7 @@ export default function Canvas({
 
   const onChange = async () => {
     const paths = await canvasRef.current.exportPaths();
-    localStorage.setItem("paths", JSON.stringify(paths, null, 2));
+    setStoredPaths(paths);
     setSavedPathsAvailable(paths.length > 0);
 
     if (!paths.length) {
@@ -93,13 +128,16 @@ export default function Canvas({
   const reset = () => {
     setScribbleExists(false);
     setSavedPathsAvailable(false);
-    localStorage.removeItem("paths");
+    clearStoredPaths();
     onScribble(null);
     canvasRef.current.resetCanvas();
   };
 
   return (
-    <div>
+    <div
+      data-initial-load-status={initialLoadStatus}
+      data-starting-path-count={startingPaths?.length || 0}
+    >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-white p-1">
           <button
