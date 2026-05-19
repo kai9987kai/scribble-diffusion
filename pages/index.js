@@ -6,7 +6,6 @@ import Predictions from "components/predictions";
 import Error from "components/error";
 import uploadFile from "lib/upload";
 import naughtyWords from "naughty-words";
-import Script from "next/script";
 import seeds from "lib/seeds";
 import pkg from "../package.json";
 import sleep from "lib/sleep";
@@ -14,6 +13,24 @@ import sleep from "lib/sleep";
 const HOST = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
+
+async function readApiResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+
+  if (contentType.includes("application/json") || /^[\[{]/.test(text.trim())) {
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return { detail: "The server returned invalid JSON." };
+    }
+  }
+
+  const title = text.match(/<title>(.*?)<\/title>/)?.[1];
+  return {
+    detail: title || response.statusText || "Unexpected server response.",
+  };
+}
 
 export default function Home() {
   const [error, setError] = useState(null);
@@ -45,6 +62,14 @@ export default function Home() {
     setIsProcessing(true);
 
     try {
+      const statusResponse = await fetch("/api/predictions");
+      const status = await readApiResponse(statusResponse);
+      if (!status.configured) {
+        throw new Error(
+          "REPLICATE_API_TOKEN is not configured. Add it to .env.local and restart the dev server."
+        );
+      }
+
       const fileUrl = await uploadFile(scribble);
       const seed = Number(form.seed.value);
 
@@ -69,7 +94,7 @@ export default function Home() {
         },
         body: JSON.stringify(body),
       });
-      let prediction = await response.json();
+      let prediction = await readApiResponse(response);
 
       if (prediction.id) {
         setPredictions((predictions) => ({
@@ -88,7 +113,7 @@ export default function Home() {
       ) {
         await sleep(500);
         const response = await fetch("/api/predictions/" + prediction.id);
-        prediction = await response.json();
+        prediction = await readApiResponse(response);
         setPredictions((predictions) => ({
           ...predictions,
           [prediction.id]: prediction,
@@ -157,7 +182,6 @@ export default function Home() {
         />
       </main>
 
-      <Script src="https://js.upload.io/upload-js-full/v1" />
     </>
   );
 }

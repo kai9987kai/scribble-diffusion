@@ -1,0 +1,32 @@
+(node:13564) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:6492) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[31merror[39m - pages\api\predictions\index.js (93:10) @ handler
+[31merror[39m - Error: The REPLICATE_API_TOKEN environment variable is not set. See README.md for instructions on how to set it.
+    at handler (webpack-internal:///(api)/./pages/api/predictions/index.js:81:15)
+    at Object.apiResolver [90m(C:\Users\kai99\Desktop\scribble-diffusion\[39mnode_modules\[4mnext[24m\dist\server\api-utils\node.js:372:15[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at async DevServer.runApi [90m(C:\Users\kai99\Desktop\scribble-diffusion\[39mnode_modules\[4mnext[24m\dist\server\next-server.js:488:9[90m)[39m
+    at async Object.fn [90m(C:\Users\kai99\Desktop\scribble-diffusion\[39mnode_modules\[4mnext[24m\dist\server\next-server.js:751:37[90m)[39m
+    at async Router.execute [90m(C:\Users\kai99\Desktop\scribble-diffusion\[39mnode_modules\[4mnext[24m\dist\server\router.js:253:36[90m)[39m
+    at async DevServer.run [90m(C:\Users\kai99\Desktop\scribble-diffusion\[39mnode_modules\[4mnext[24m\dist\server\base-server.js:384:29[90m)[39m
+    at async DevServer.run [90m(C:\Users\kai99\Desktop\scribble-diffusion\[39mnode_modules\[4mnext[24m\dist\server\dev\next-dev-server.js:743:20[90m)[39m
+    at async DevServer.handleRequest [90m(C:\Users\kai99\Desktop\scribble-diffusion\[39mnode_modules\[4mnext[24m\dist\server\base-server.js:322:20[90m)[39m {
+  page: [32m'/api/predictions'[39m
+}
+[0m [90m 91 | [39m[0m
+[0m [90m 92 | [39m  [36mif[39m ([33m![39mprocess[33m.[39menv[33m.[39m[33mREPLICATE_API_TOKEN[39m) {[0m
+[0m[31m[1m>[22m[39m[90m 93 | [39m    [36mthrow[39m [36mnew[39m [33mError[39m([0m
+[0m [90m    | [39m         [31m[1m^[22m[39m[0m
+[0m [90m 94 | [39m      [32m"The REPLICATE_API_TOKEN environment variable is not set. See README.md for instructions on how to set it."[39m[0m
+[0m [90m 95 | [39m    )[33m;[39m[0m
+[0m [90m 96 | [39m  }[0m
+[33mwarn[39m  - Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[33mwarn[39m  - Fast Refresh had to perform a full reload due to a runtime error.
+[33mwarn[39m  - Fast Refresh had to perform a full reload due to a runtime error.
+[33mwarn[39m  - Fast Refresh had to perform a full reload due to a runtime error.
+[33mwarn[39m  - Fast Refresh had to perform a full reload due to a runtime error.

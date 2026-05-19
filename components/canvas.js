@@ -30,6 +30,13 @@ export default function Canvas({
   const [tool, setTool] = React.useState("pen");
   const [savedPathsAvailable, setSavedPathsAvailable] = React.useState(false);
 
+  const loadStartingPaths = React.useCallback(async () => {
+    await canvasRef.current.loadPaths(startingPaths);
+    setScribbleExists(true);
+    const data = await canvasRef.current.exportImage("png");
+    onScribble(data);
+  }, [onScribble, setScribbleExists, startingPaths]);
+
   useEffect(() => {
     // Hack to work around Firfox bug in react-sketch-canvas
     // https://github.com/vinothpandian/react-sketch-canvas/issues/54
@@ -39,18 +46,11 @@ export default function Canvas({
 
     setSavedPathsAvailable(Boolean(localStorage.getItem("paths")));
     loadStartingPaths();
-  }, []);
+  }, [loadStartingPaths]);
 
   useEffect(() => {
     canvasRef.current?.eraseMode(tool === "eraser");
   }, [tool]);
-
-  async function loadStartingPaths() {
-    await canvasRef.current.loadPaths(startingPaths);
-    setScribbleExists(true);
-    const data = await canvasRef.current.exportImage("png");
-    onScribble(data);
-  }
 
   async function restoreSavedPaths() {
     const savedPaths = localStorage.getItem("paths");
@@ -73,8 +73,6 @@ export default function Canvas({
     setSavedPathsAvailable(paths.length > 0);
 
     if (!paths.length) {
-      setScribbleExists(false);
-      onScribble(null);
       return;
     }
 

@@ -81,46 +81,63 @@ function sanitizeInput(body) {
   return input;
 }
 
+function sendJson(res, statusCode, payload) {
+  res.statusCode = statusCode;
+  res.setHeader("Content-Type", "application/json");
+  res.end(JSON.stringify(payload));
+}
+
 export default async function handler(req, res) {
+  if (req.method === "GET") {
+    sendJson(res, 200, {
+      configured: Boolean(process.env.REPLICATE_API_TOKEN),
+    });
+    return;
+  }
+
   if (req.method !== "POST") {
-    res.statusCode = 405;
     res.setHeader("Allow", "POST");
-    res.end(JSON.stringify({ detail: "Method not allowed" }));
+    sendJson(res, 405, { detail: "Method not allowed" });
     return;
   }
 
   if (!process.env.REPLICATE_API_TOKEN) {
-    throw new Error(
-      "The REPLICATE_API_TOKEN environment variable is not set. See README.md for instructions on how to set it."
-    );
+    sendJson(res, 500, {
+      detail:
+        "REPLICATE_API_TOKEN is not configured. Add it to .env.local and restart the dev server.",
+    });
+    return;
   }
 
   const input = sanitizeInput(req.body);
   if (!input) {
-    res.statusCode = 400;
-    res.end(
-      JSON.stringify({ detail: "A prompt and scribble image are required." })
-    );
+    sendJson(res, 400, { detail: "A prompt and scribble image are required." });
     return;
   }
 
-  const prediction = await replicate.predictions.create({
-    version: CONTROLNET_VERSION,
-    input,
-    ...(WEBHOOK_HOST && {
-      webhook: `${WEBHOOK_HOST}/api/replicate-webhook`,
-      webhook_events_filter: ["start", "completed"],
-    }),
-  });
+  let prediction;
+  try {
+    prediction = await replicate.predictions.create({
+      version: CONTROLNET_VERSION,
+      input,
+      ...(WEBHOOK_HOST && {
+        webhook: `${WEBHOOK_HOST}/api/replicate-webhook`,
+        webhook_events_filter: ["start", "completed"],
+      }),
+    });
+  } catch (error) {
+    sendJson(res, 500, {
+      detail: error.message || "Could not create Replicate prediction.",
+    });
+    return;
+  }
 
   if (prediction?.error) {
-    res.statusCode = 500;
-    res.end(JSON.stringify({ detail: prediction.error }));
+    sendJson(res, 500, { detail: prediction.error });
     return;
   }
 
-  res.statusCode = 201;
-  res.end(JSON.stringify(prediction));
+  sendJson(res, 201, prediction);
 }
 
 export const config = {
