@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 export default function PromptForm({
   initialPrompt,
+  isConfigured = true,
   onSubmit,
   isProcessing,
   scribbleExists,
@@ -20,7 +21,8 @@ export default function PromptForm({
       "longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality",
   });
 
-  const disabled = isProcessing || !(scribbleExists && prompt?.length > 0);
+  const disabled =
+    !isConfigured || isProcessing || !(scribbleExists && prompt?.length > 0);
 
   useEffect(() => {
     setPrompt(initialPrompt);

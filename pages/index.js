@@ -32,7 +32,10 @@ async function readApiResponse(response) {
   };
 }
 
-export default function Home() {
+const CONFIGURATION_ERROR =
+  "REPLICATE_API_TOKEN is not configured. Add it to .env.local and restart the dev server.";
+
+export default function Home({ isReplicateConfigured }) {
   const [error, setError] = useState(null);
   const [submissionCount, setSubmissionCount] = useState(0);
   const [predictions, setPredictions] = useState({});
@@ -65,9 +68,7 @@ export default function Home() {
       const statusResponse = await fetch("/api/predictions");
       const status = await readApiResponse(statusResponse);
       if (!status.configured) {
-        throw new Error(
-          "REPLICATE_API_TOKEN is not configured. Add it to .env.local and restart the dev server."
-        );
+        throw new Error(CONFIGURATION_ERROR);
       }
 
       const fileUrl = await uploadFile(scribble);
@@ -167,12 +168,17 @@ export default function Home() {
 
           <PromptForm
             initialPrompt={initialPrompt}
+            isConfigured={isReplicateConfigured}
             onSubmit={handleSubmit}
             isProcessing={isProcessing}
             scribbleExists={scribbleExists}
           />
 
-          <Error error={error} />
+          <Error
+            error={
+              error || (!isReplicateConfigured ? CONFIGURATION_ERROR : null)
+            }
+          />
         </div>
 
         <Predictions
@@ -184,4 +190,12 @@ export default function Home() {
 
     </>
   );
+}
+
+export async function getServerSideProps() {
+  return {
+    props: {
+      isReplicateConfigured: Boolean(process.env.REPLICATE_API_TOKEN),
+    },
+  };
 }

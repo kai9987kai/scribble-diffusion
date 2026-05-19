@@ -53,7 +53,6 @@ export default function Canvas({
   const [strokeColor, setStrokeColor] = React.useState("black");
   const [tool, setTool] = React.useState("pen");
   const [savedPathsAvailable, setSavedPathsAvailable] = React.useState(false);
-  const [initialLoadStatus, setInitialLoadStatus] = React.useState("idle");
 
   useEffect(() => {
     // Hack to work around Firfox bug in react-sketch-canvas
@@ -76,14 +75,12 @@ export default function Canvas({
     if (!startingPaths?.length) return;
 
     try {
-      setInitialLoadStatus("loading");
       await canvasRef.current.loadPaths(startingPaths);
       setScribbleExists(true);
       const data = await canvasRef.current.exportImage("png");
       onScribble(data);
-      setInitialLoadStatus("loaded");
     } catch (e) {
-      setInitialLoadStatus(e.message || "failed");
+      console.error("Could not load starting paths", e);
     }
   }
 
@@ -134,10 +131,7 @@ export default function Canvas({
   };
 
   return (
-    <div
-      data-initial-load-status={initialLoadStatus}
-      data-starting-path-count={startingPaths?.length || 0}
-    >
+    <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-white p-1">
           <button
