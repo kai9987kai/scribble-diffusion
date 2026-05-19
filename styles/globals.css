@@ -11,6 +11,22 @@ input {
   @apply py-2;
 }
 
+select {
+  @apply border;
+  @apply border-solid;
+  @apply border-gray-300;
+  @apply rounded-md;
+  @apply px-3;
+  @apply py-2;
+  @apply bg-white;
+}
+
+input[type="range"] {
+  @apply border-0;
+  @apply px-0;
+  @apply py-0;
+}
+
 .border-hairline {
   @apply border border-black border-opacity-10;
 }
@@ -39,6 +55,75 @@ input {
   top: -0.1em;
   width: 1.1em;
   height: 1.1em;
+}
+
+.icon-only {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.tool-button {
+  @apply grid;
+  @apply h-9;
+  @apply w-9;
+  @apply place-items-center;
+  @apply rounded;
+  @apply text-gray-500;
+}
+
+.tool-button-active {
+  @apply bg-gray-900;
+  @apply text-white;
+}
+
+.tool-range {
+  @apply w-full;
+}
+
+.color-swatch {
+  @apply h-8;
+  @apply w-8;
+  @apply rounded-full;
+  @apply border;
+  @apply border-white;
+  @apply shadow-sm;
+}
+
+.color-swatch-active {
+  @apply ring-2;
+  @apply ring-black;
+  @apply ring-offset-2;
+}
+
+.chip-button {
+  @apply rounded-full;
+  @apply border;
+  @apply border-gray-200;
+  @apply bg-white;
+  @apply px-3;
+  @apply py-1;
+  @apply text-sm;
+  @apply text-gray-600;
+}
+
+.experiment-panel {
+  @apply rounded-md;
+  @apply border;
+  @apply border-gray-200;
+  @apply bg-white;
+  @apply p-4;
+}
+
+.field-label {
+  @apply grid;
+  @apply gap-1;
+  @apply text-sm;
+  @apply text-gray-500;
+}
+
+.field-label span {
+  @apply font-medium;
+  @apply text-gray-600;
 }
 
 .prose {

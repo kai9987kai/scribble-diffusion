@@ -27,63 +27,85 @@ export default function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const form = e.currentTarget;
 
     // track submissions so we can show a spinner while waiting for the next prediction to be created
-    setSubmissionCount(submissionCount + 1);
+    setSubmissionCount((count) => count + 1);
 
-    const prompt = e.target.prompt.value
+    const prompt = form.prompt.value
       .split(/\s+/)
-      .map((word) => (naughtyWords.en.includes(word) ? "something" : word))
+      .map((word) =>
+        naughtyWords.en.includes(word.toLowerCase().replace(/[^a-z]/g, ""))
+          ? "something"
+          : word
+      )
       .join(" ");
 
     setError(null);
     setIsProcessing(true);
 
-    const fileUrl = await uploadFile(scribble);
+    try {
+      const fileUrl = await uploadFile(scribble);
+      const seed = Number(form.seed.value);
 
-    const body = {
-      prompt,
-      image: fileUrl,
-      structure: "scribble",
-    };
+      const body = {
+        prompt,
+        image: fileUrl,
+        structure: form.structure.value,
+        num_samples: form.num_samples.value,
+        image_resolution: form.image_resolution.value,
+        steps: Number(form.steps.value),
+        scale: Number(form.scale.value),
+        eta: Number(form.eta.value),
+        a_prompt: form.a_prompt.value,
+        n_prompt: form.n_prompt.value,
+        ...(Number.isInteger(seed) && seed >= 0 ? { seed } : {}),
+      };
 
-    const response = await fetch("/api/predictions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    let prediction = await response.json();
+      const response = await fetch("/api/predictions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      let prediction = await response.json();
 
-    setPredictions((predictions) => ({
-      ...predictions,
-      [prediction.id]: prediction,
-    }));
-
-    if (response.status !== 201) {
-      setError(prediction.detail);
-      return;
-    }
-
-    while (
-      prediction.status !== "succeeded" &&
-      prediction.status !== "failed"
-    ) {
-      await sleep(500);
-      const response = await fetch("/api/predictions/" + prediction.id);
-      prediction = await response.json();
-      setPredictions((predictions) => ({
-        ...predictions,
-        [prediction.id]: prediction,
-      }));
-      if (response.status !== 200) {
-        setError(prediction.detail);
-        return;
+      if (prediction.id) {
+        setPredictions((predictions) => ({
+          ...predictions,
+          [prediction.id]: prediction,
+        }));
       }
-    }
 
-    setIsProcessing(false);
+      if (response.status !== 201) {
+        throw new Error(prediction.detail || "Could not create prediction.");
+      }
+
+      while (
+        prediction.status !== "succeeded" &&
+        prediction.status !== "failed"
+      ) {
+        await sleep(500);
+        const response = await fetch("/api/predictions/" + prediction.id);
+        prediction = await response.json();
+        setPredictions((predictions) => ({
+          ...predictions,
+          [prediction.id]: prediction,
+        }));
+        if (response.status !== 200) {
+          throw new Error(prediction.detail || "Could not refresh prediction.");
+        }
+      }
+
+      if (prediction.status === "failed") {
+        throw new Error(prediction.error || "The prediction failed.");
+      }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
